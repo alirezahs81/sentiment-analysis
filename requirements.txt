@@ -4,8 +4,9 @@ pandas>=2.0.0
 
 # NLP & ML
 scikit-learn>=1.3.0
+joblib>=1.3.0
 
-# Deep learning / Transformers (needed for training & inference)
+# Deep learning / Transformers (needed for BERT training & inference)
 transformers>=4.35.0
 torch>=2.0.0
 
@@ -19,3 +20,8 @@ plotly>=5.18.0
 
 # Streamlit UI
 streamlit>=1.32.0
+
+# API
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+httpx>=0.27.0
