@@ -1,131 +1,124 @@
-# 📊 Sentiment Analysis & Support Ticket Classification
+# Sentiment Analysis & Support Ticket Classification
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![Transformers](https://img.shields.io/badge/%F0%9F%A4%97-Transformers-yellow)](https://huggingface.co/docs/transformers)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.32%2B-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/alirezahs81/sentiment-analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/alirezahs81/sentiment-analysis/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?logo=pytorch&logoColor=white)
+![Transformers](https://img.shields.io/badge/%F0%9F%A4%97-Transformers-yellow)](https://huggingface.co/docs/transformers)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.32%2B-FF4B4B?logo=streamlit&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
-An end-to-end NLP project combining **BERT-based sentiment analysis** with a
-**rule-based support ticket classifier**, served through an interactive
-Streamlit dashboard.
+End-to-end NLP project combining **BERT-based sentiment analysis** with an
+**ML ticket classifier** (TF-IDF + LogisticRegression, rule-based fallback),
+served through a **Streamlit** dashboard and a **FastAPI** service.
 
-## ✨ Features
+## Features
 
-### Sentiment Analysis (Deep Learning)
+### Sentiment analysis (deep learning)
 - Fine-tunable `bert-base-uncased` classifier (PyTorch + 🤗 Transformers)
-- Custom `Dataset` / training loop with linear warmup scheduling
-- Single-text and batch prediction with confidence scores and class probabilities
+- Single-text and batch prediction with confidence and class probabilities
 - Model persistence (`models/sentiment_model.pt`) and JSON evaluation reports
 
-### Ticket Classification (ML with rule-based fallback)
-- TF-IDF (word bigrams) + LogisticRegression trained on a bundled set of 58 labeled tickets
-- Routes support tickets into 5 categories: Technical Issues, Billing & Payments,
-  Account Access, Feature Requests, General Inquiries
-- Transparent rule-based keyword classifier is used automatically when no trained model exists
-- Automatic urgency/priority estimation (low / medium / high)
+### Ticket classification (ML + rule fallback)
+- **Primary:** TF-IDF (word bigrams) + LogisticRegression on bundled labeled tickets
+- **Fallback:** transparent keyword rules when no trained model is present
+- Categories: Technical Issues, Billing & Payments, Account Access, Feature Requests, General Inquiries
+- Automatic priority estimation (low / medium / high)
 
 | Ticket classifier | 5-fold CV accuracy |
 |---|---|
-| Rule-based keywords | 0.19 |
-| TF-IDF + LogisticRegression | 0.69 |
+| Rule-based keywords | ~0.19 |
+| TF-IDF + LogisticRegression | ~0.69 |
 
-The labeled ticket set is small and hand-written, so these numbers indicate
-direction rather than production quality — adding real tickets improves it quickly.
+The labeled ticket set is small and hand-written; numbers show direction, not production quality.
 
-### Interactive Dashboard (Streamlit)
-- 📝 **Single Analysis** — real-time sentiment prediction with probability bars
-- 📊 **Batch Analysis** — upload a CSV, get predictions, metrics and a downloadable results file
-- 📈 **Model Evaluation** — accuracy, per-class metrics and confusion matrix
-- 📁 **Data Management** — configurable preprocessing pipeline (cleaning, stopwords, stemming, lemmatization)
-- 🎫 **Ticket Classification** — category, priority and keyword breakdown per ticket
-- 🏋️ **Train Model** — kick off training directly from the UI and watch loss/accuracy curves
+### Serving
+- **Streamlit** interactive dashboard (analysis, batch CSV, evaluation, training hooks)
+- **FastAPI** REST endpoints for tickets (always) and sentiment (when BERT weights exist)
+- **Docker** image trains the ticket model at build time
 
-## 🗂 Project Structure
+## Project structure
 
-```
+```text
 sentiment-analysis/
-├── app.py                     # Streamlit dashboard (entry point)
+├── app.py                     # Streamlit dashboard
 ├── src/
-│   ├── data_loading.py        # Sample data + CSV I/O helpers
-│   ├── preprocessing.py       # Text cleaning, stopwords, stemming, lemmatization
-│   ├── model_training.py      # BERT classifier, Dataset and Trainer classes
-│   ├── train.py               # Full training pipeline entry point
-│   ├── evaluation.py          # Metrics, confusion-matrix plotting, report export
-│   ├── inference.py           # SentimentAnalyzer for single/batch inference
-│   ├── ticket_classification.py  # ML ticket classifier + rule-based fallback
-│   └── train_tickets.py       # Ticket classifier training entry point
-├── tests/                     # Pytest suite
-├── data/                      # tickets.csv (labeled ticket dataset)
-├── models/                    # Trained weights (gitignored)
-├── reports/                   # Generated metrics and plots (gitignored)
+│   ├── data_loading.py
+│   ├── preprocessing.py
+│   ├── model_training.py      # BERT classifier + trainer
+│   ├── train.py               # Sentiment training CLI
+│   ├── evaluation.py
+│   ├── inference.py           # SentimentAnalyzer
+│   ├── ticket_classification.py
+│   ├── train_tickets.py       # Ticket training CLI
+│   └── api.py                 # FastAPI app
+├── tests/
+├── data/tickets.csv
+├── Dockerfile
 └── requirements.txt
 ```
 
-## 🚀 Quick Start
-
-### 1. Install
+## Quick start
 
 ```bash
 git clone https://github.com/alirezahs81/sentiment-analysis.git
 cd sentiment-analysis
-python -m venv venv
-venv\Scripts\activate        # Windows  (or: source venv/bin/activate)
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
 
-### 2. Run the dashboard
+# Optional: ticket model for better routing
+python -m src.train_tickets
 
-```bash
+# Dashboard
 streamlit run app.py
+
+# API (docs at http://localhost:8000/docs)
+uvicorn src.api:app --reload --port 8000
 ```
 
-### 3. Train the model (optional)
-
-```bash
-python -m src.train
-```
-
-Trained weights are saved to `models/sentiment_model.pt`; metrics and training
-history land in `reports/`. Without a trained model the app warns and uses
-random weights — train once for meaningful predictions.
-
-`--dataset sample` (default) uses the bundled 8-example demo set. To train on a
-real corpus (~2,000 labeled movie reviews, downloaded automatically on first use):
+### Sentiment training (optional, GPU recommended)
 
 ```bash
 python -m src.train --dataset movie_reviews
 ```
 
-### 4. Train the ticket classifier (optional, recommended)
+Without a trained BERT checkpoint the UI warns and sentiment weights are random.
+Ticket endpoints still work after `python -m src.train_tickets`.
+
+### Docker
 
 ```bash
-python -m src.train_tickets
+docker build -t sentiment-analysis .
+docker run --rm -p 8501:8501 sentiment-analysis
+# API instead of Streamlit:
+docker run --rm -p 8000:8000 sentiment-analysis \
+  uvicorn src.api:app --host 0.0.0.0 --port 8000
 ```
 
-Trains the ML ticket classifier on `data/tickets.csv` and saves it to
-`models/ticket_classifier.joblib`; the app loads it automatically on startup.
-You can point it at your own CSV (`--data path.csv`) with `ticket_text` and
-`category` columns.
+### Example API call
 
-## 🧪 Tests
+```bash
+curl -s http://localhost:8000/tickets/classify \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "Payment charged twice, need a refund"}'
+```
+
+## Tests & CI
 
 ```bash
 pip install -r requirements-dev.txt
 pytest
 ```
 
-## 📌 Notes & Limitations
+GitHub Actions runs on **Python 3.10, 3.11, and 3.12** (lightweight stack: sklearn/NLTK/FastAPI — not full torch fine-tuning).
 
-- Fine-tuning `bert-base-uncased` on the full movie-review corpus needs a GPU
-  to finish in reasonable time; on CPU use a small `--epochs` value or subsample.
-- The BERT model and the trained ticket classifier are not committed (binary
-  artifacts); run the training commands above to produce them locally.
-- The Streamlit app and BERT training require `torch`, which is not installed in
-  the CI environment — CI covers preprocessing, data loading, evaluation and the
-  ticket classifiers only.
-- Persian text cleaning is supported by the preprocessor for future extension.
+## Notes & limitations
 
-## 📄 License
+- Fine-tuning `bert-base-uncased` on the full movie-review corpus needs a GPU for reasonable time; on CPU use small `--epochs` or subsample.
+- BERT weights and ticket `.joblib` artifacts are not committed; train locally or via Docker build for tickets.
+- CI covers preprocessing, data loading, evaluation, ticket classifiers, and API ticket routes — not GPU BERT training.
 
-Released under the [MIT License](LICENSE).
+## License
+
+[MIT License](LICENSE).
