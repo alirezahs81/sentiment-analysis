@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+__pycache__
+.pytest_cache
+.coverage
+htmlcov
+.nltk_data
+models/*.pt
+models/*.joblib
+reports/*
+*.md
+.github
