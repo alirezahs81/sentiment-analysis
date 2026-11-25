@@ -18,6 +18,19 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+try:
+    import joblib
+except ImportError:  # joblib ships with scikit-learn
+    joblib = None
+
+MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
+TICKET_MODEL_PATH = MODELS_DIR / "ticket_classifier.joblib"
+
 
 # Ticket category mappings
 TICKET_CATEGORIES = {
@@ -105,6 +118,61 @@ class TicketClassifier:
         self.model_name = model_name
         self.preprocessor = TicketPreprocessor()
         self.category_keywords = self._load_category_keywords()
+        self.ml_pipeline = None  # fitted TF-IDF + LogisticRegression, if available
+
+    # ---------------- ML path ----------------
+
+    def train_ml(self, df, text_col='ticket_text', label_col='category', cv=5):
+        """
+        Train a TF-IDF + LogisticRegression classifier on labeled tickets
+        and switch the classifier to the ML method. Falls back to the
+        rule-based method when too few examples are available.
+        """
+        df = df.dropna(subset=[text_col, label_col])
+        if len(df) < 10 or df[label_col].nunique() < 2:
+            print("Not enough labeled tickets - staying with the rule-based method")
+            return None
+
+        self.ml_pipeline = Pipeline([
+            ('tfidf', TfidfVectorizer(ngram_range=(1, 2), min_df=1, sublinear_tf=True)),
+            ('clf', LogisticRegression(max_iter=1000, C=10)),
+        ])
+
+        scores = None
+        if cv and len(df) >= cv * 2:
+            try:
+                scores = cross_val_score(
+                    self.ml_pipeline, df[text_col], df[label_col], cv=cv, scoring='f1_macro'
+                )
+                print(f"ML ticket classifier CV F1-macro: {scores.mean():.3f} ± {scores.std():.3f}")
+            except ValueError:
+                scores = None
+
+        self.ml_pipeline.fit(df[text_col], df[label_col])
+        self.model_name = 'tfidf-logreg'
+        return scores
+
+    def save_ml(self, filepath=TICKET_MODEL_PATH):
+        """Persist the fitted ML pipeline with joblib."""
+        if self.ml_pipeline is None or joblib is None:
+            return False
+        filepath = Path(filepath)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(self.ml_pipeline, filepath)
+        return True
+
+    def load_ml(self, filepath=TICKET_MODEL_PATH):
+        """Load a previously saved ML pipeline; returns True on success."""
+        if joblib is None:
+            return False
+        filepath = Path(filepath)
+        if not filepath.exists():
+            return False
+        self.ml_pipeline = joblib.load(filepath)
+        self.model_name = 'tfidf-logreg'
+        return True
+
+    # ---------------- classification ----------------
     
     def _load_category_keywords(self):
         """Load keyword mappings for each ticket category."""
@@ -166,16 +234,30 @@ class TicketClassifier:
     def classify(self, text):
         """
         Public classification method.
+        Uses the trained ML model when available, otherwise rule-based.
         Returns dict with category and confidence.
         """
+        if self.ml_pipeline is not None:
+            proba = self.ml_pipeline.predict_proba([text])[0]
+            best = proba.argmax()
+            category = self.ml_pipeline.classes_[best]
+            confidence = float(proba[best])
+            return {
+                'text': text,
+                'category': category,
+                'priority': self._estimate_priority(text),
+                'confidence': confidence,
+                'method': 'tfidf-logreg',
+            }
+
         category, confidence = self.rule_based_classify(text)
-        
+
         return {
             'text': text,
             'category': category,
             'priority': self._estimate_priority(text),
             'confidence': confidence,
-            'method': 'rule-based'
+            'method': 'rule-based',
         }
     
     def _estimate_priority(self, text):
@@ -255,6 +337,21 @@ def create_sample_ticket_data(filepath=None):
         df = pd.read_csv(filepath)
         return df
     return SAMPLE_TICKETS.copy()
+
+
+def load_ticket_data(filepath=Path(__file__).resolve().parent.parent / "data" / "tickets.csv"):
+    """Load the bundled labeled ticket dataset (or a custom CSV)."""
+    return pd.read_csv(filepath)
+
+
+def train_ticket_classifier(filepath=None, save=True):
+    """Train the ML ticket classifier on the bundled dataset."""
+    df = load_ticket_data(filepath) if filepath else load_ticket_data()
+    classifier = TicketClassifier()
+    classifier.train_ml(df, text_col='ticket_text', label_col='category')
+    if save:
+        classifier.save_ml()
+    return classifier
 
 
 if __name__ == "__main__":

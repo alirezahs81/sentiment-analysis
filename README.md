@@ -18,11 +18,20 @@ Streamlit dashboard.
 - Single-text and batch prediction with confidence scores and class probabilities
 - Model persistence (`models/sentiment_model.pt`) and JSON evaluation reports
 
-### Ticket Classification (Rule-Based)
-- Routes support tickets into 6 categories: Technical Issues, Billing & Payments,
-  Account Access, Feature Requests, General Inquiries, Urgent/Priority
-- Keyword-driven category scoring with confidence estimates
+### Ticket Classification (ML with rule-based fallback)
+- TF-IDF (word bigrams) + LogisticRegression trained on a bundled set of 58 labeled tickets
+- Routes support tickets into 5 categories: Technical Issues, Billing & Payments,
+  Account Access, Feature Requests, General Inquiries
+- Transparent rule-based keyword classifier is used automatically when no trained model exists
 - Automatic urgency/priority estimation (low / medium / high)
+
+| Ticket classifier | 5-fold CV accuracy |
+|---|---|
+| Rule-based keywords | 0.19 |
+| TF-IDF + LogisticRegression | 0.69 |
+
+The labeled ticket set is small and hand-written, so these numbers indicate
+direction rather than production quality — adding real tickets improves it quickly.
 
 ### Interactive Dashboard (Streamlit)
 - 📝 **Single Analysis** — real-time sentiment prediction with probability bars
@@ -44,9 +53,10 @@ sentiment-analysis/
 │   ├── train.py               # Full training pipeline entry point
 │   ├── evaluation.py          # Metrics, confusion-matrix plotting, report export
 │   ├── inference.py           # SentimentAnalyzer for single/batch inference
-│   └── ticket_classification.py  # Rule-based ticket classifier
+│   ├── ticket_classification.py  # ML ticket classifier + rule-based fallback
+│   └── train_tickets.py       # Ticket classifier training entry point
 ├── tests/                     # Pytest suite
-├── data/                      # Datasets (gitkept)
+├── data/                      # tickets.csv (labeled ticket dataset)
 ├── models/                    # Trained weights (gitignored)
 ├── reports/                   # Generated metrics and plots (gitignored)
 └── requirements.txt
@@ -80,6 +90,24 @@ Trained weights are saved to `models/sentiment_model.pt`; metrics and training
 history land in `reports/`. Without a trained model the app warns and uses
 random weights — train once for meaningful predictions.
 
+`--dataset sample` (default) uses the bundled 8-example demo set. To train on a
+real corpus (~2,000 labeled movie reviews, downloaded automatically on first use):
+
+```bash
+python -m src.train --dataset movie_reviews
+```
+
+### 4. Train the ticket classifier (optional, recommended)
+
+```bash
+python -m src.train_tickets
+```
+
+Trains the ML ticket classifier on `data/tickets.csv` and saves it to
+`models/ticket_classifier.joblib`; the app loads it automatically on startup.
+You can point it at your own CSV (`--data path.csv`) with `ticket_text` and
+`category` columns.
+
 ## 🧪 Tests
 
 ```bash
@@ -89,12 +117,13 @@ pytest
 
 ## 📌 Notes & Limitations
 
-- The shipped sample dataset is tiny (8 examples) — it demonstrates the
-  pipeline end to end. Plug in a real dataset (e.g. SST-2, IMDB or your own
-  CSV with `text` and `label` columns) via `src/data_loading.py`.
-- Ticket classification is intentionally rule-based for transparency and
-  zero training cost; the `TicketDataset` class is included as a scaffold for
-  upgrading it to an ML model.
+- Fine-tuning `bert-base-uncased` on the full movie-review corpus needs a GPU
+  to finish in reasonable time; on CPU use a small `--epochs` value or subsample.
+- The BERT model and the trained ticket classifier are not committed (binary
+  artifacts); run the training commands above to produce them locally.
+- The Streamlit app and BERT training require `torch`, which is not installed in
+  the CI environment — CI covers preprocessing, data loading, evaluation and the
+  ticket classifiers only.
 - Persian text cleaning is supported by the preprocessor for future extension.
 
 ## 📄 License

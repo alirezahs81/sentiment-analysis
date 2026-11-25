@@ -5,6 +5,7 @@ Runs the complete flow: load data -> split -> train BERT classifier
 -> evaluate -> persist model weights and reports.
 """
 
+import argparse
 import json
 from pathlib import Path
 
@@ -13,7 +14,7 @@ import torch
 from sklearn.model_selection import train_test_split
 from transformers import AutoTokenizer
 
-from src.data_loading import load_sample_data
+from src.data_loading import load_sample_data, load_nltk_movie_reviews
 from src.model_training import BERTweetClassifier, Trainer
 
 MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
@@ -105,4 +106,25 @@ def train_full_pipeline(
 
 
 if __name__ == "__main__":
-    train_full_pipeline()
+    parser = argparse.ArgumentParser(description="Train the sentiment model")
+    parser.add_argument(
+        "--dataset",
+        choices=["sample", "movie_reviews"],
+        default="sample",
+        help="sample: bundled 8-example demo; movie_reviews: ~2k real NLTK reviews",
+    )
+    parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--learning-rate", type=float, default=2e-5)
+    args = parser.parse_args()
+
+    df = None
+    if args.dataset == "movie_reviews":
+        df = load_nltk_movie_reviews()
+
+    train_full_pipeline(
+        df=df,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.learning_rate,
+    )

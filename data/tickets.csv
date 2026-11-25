@@ -1,0 +1,59 @@
+ticket_text,category
+"My payment was charged twice this month, I need a refund immediately",Billing & Payments
+I was billed for a subscription I never subscribed to,Billing & Payments
+How do I update my credit card details for the invoice?,Billing & Payments
+The price on my invoice is different from the plan I selected,Billing & Payments
+I requested a refund two weeks ago and nothing has happened yet,Billing & Payments
+Why was I charged a different price than advertised?,Billing & Payments
+Please cancel my subscription and refund the last payment,Billing & Payments
+My invoice for October is missing from the billing page,Billing & Payments
+Can I get an itemized receipt for my payment?,Billing & Payments
+The payment method on file keeps getting declined,Billing & Payments
+"I can't log in to my account, my password suddenly stopped working",Account Access
+I forgot my password and the reset email never arrives,Account Access
+My account got locked after too many login attempts,Account Access
+Two-factor authentication codes are not being sent to my phone,Account Access
+I can't access my account from a new device,Account Access
+How do I recover my username?,Account Access
+My credentials are correct but sign in keeps failing,Account Access
+"Someone may have hacked my account, I can't get in",Account Access
+The password reset link expires before I can use it,Account Access
+I can't sign in with Google anymore,Account Access
+The app crashes every time I try to upload a photo,Technical Issues
+I keep getting a 500 server error when saving my profile,Technical Issues
+The mobile app freezes on the settings screen,Technical Issues
+"Search results are broken, the filter does not work at all",Technical Issues
+The export to PDF feature fails with an error message,Technical Issues
+The website is extremely slow since yesterday,Technical Issues
+Push notifications stopped working after the last update,Technical Issues
+I found a bug: the dashboard shows wrong statistics,Technical Issues
+Sync between devices is failing,Technical Issues
+The API returns an error on every request now,Technical Issues
+It would be great to have a dark mode for the dashboard,Feature Requests
+Please add support for exporting data to Excel,Feature Requests
+I would like to see an integration with Slack,Feature Requests
+Suggestion: add keyboard shortcuts for power users,Feature Requests
+Can you add a calendar view to the reports?,Feature Requests
+I want to be able to customize the notification settings,Feature Requests
+It would be nice to have multi-language support,Feature Requests
+Please consider adding a mobile widget,Feature Requests
+A bulk edit feature would improve my workflow a lot,Feature Requests
+I'd love to see usage analytics per project,Feature Requests
+"Hello, I have a question about my subscription plan",General Inquiries
+"Hi, how do I contact your support team?",General Inquiries
+Thanks for the great service! I just wanted to say the app is awesome,General Inquiries
+Where can I find documentation for your API?,General Inquiries
+What are your office hours for customer support?,General Inquiries
+Do you offer discounts for students?,General Inquiries
+I want to know more about your privacy policy,General Inquiries
+How do I delete my account?,General Inquiries
+Thanks! The last update fixed my problem,General Inquiries
+Is this service available in my country?,General Inquiries
+"This is critical, the whole system is down and our team cannot work",Technical Issues
+"Urgent: production servers stopped responding, we are losing customers",Technical Issues
+Emergency: the checkout page stopped working during our biggest sale,Technical Issues
+"I cannot use the product at all, everything fails, please help ASAP",Technical Issues
+Critical bug: user data is displayed to the wrong accounts,Technical Issues
+"The service has been down for 6 hours, this is unacceptable",Technical Issues
+"I urgently need help, my entire project data disappeared",Technical Issues
+"This is an emergency, our whole team is locked out before a client demo",Account Access

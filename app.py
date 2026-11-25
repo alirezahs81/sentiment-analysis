@@ -406,9 +406,12 @@ elif app_mode == "🎫 Ticket Classification":
     Classify support tickets into categories for routing and prioritization.
     """)
     
-    # Initialize classifier if not already
+    # Initialize classifier if not already (prefer trained ML model)
     if 'ticket_classifier' not in st.session_state:
-        st.session_state.ticket_classifier = TicketClassifier()
+        classifier = TicketClassifier()
+        if classifier.load_ml():
+            st.sidebar.success("ML ticket model loaded")
+        st.session_state.ticket_classifier = classifier
     
     classifier = st.session_state.ticket_classifier
     

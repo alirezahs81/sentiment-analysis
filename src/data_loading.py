@@ -30,6 +30,33 @@ def load_from_csv(filepath):
         raise FileNotFoundError(f"File not found: {filepath}")
     return pd.read_csv(filepath)
 
+
+def load_nltk_movie_reviews():
+    """
+    Load the NLTK movie_reviews corpus as a real sentiment dataset
+    (~2,000 labeled movie reviews, 1,000 positive / 1,000 negative).
+
+    Downloads the corpus on first use (~4 MB). Falls back to the
+    bundled sample data when the corpus is unavailable (e.g. offline).
+    """
+    import nltk
+    from nltk.corpus import movie_reviews
+
+    try:
+        nltk.download("movie_reviews", quiet=True)
+        docs = [
+            (" ".join(movie_reviews.words(fileid)), 1 if category == "pos" else 0)
+            for category in movie_reviews.categories()
+            for fileid in movie_reviews.fileids(category)
+        ]
+        df = pd.DataFrame(docs, columns=["text", "label"]).sample(
+            frac=1.0, random_state=42
+        ).reset_index(drop=True)
+        return df
+    except LookupError:
+        print("movie_reviews corpus unavailable - falling back to sample data")
+        return load_sample_data()
+
 def save_processed_data(df, filepath):
     """Save processed data to CSV."""
     filepath = Path(filepath)

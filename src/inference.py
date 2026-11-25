@@ -35,7 +35,10 @@ class SentimentAnalyzer:
     
     def preprocess_text(self, text):
         """Preprocess input text."""
-        return self.preprocessor.preprocess(text, clean=True, remove_stopwords_flag=True, stem=False)
+        # Clean only: training tokenizes raw text, so stopwords are kept at inference
+        return self.preprocessor.preprocess(
+            text, clean=True, remove_stopwords_flag=False, stem=False
+        )
     
     def analyze(self, text):
         """Analyze sentiment of given text."""

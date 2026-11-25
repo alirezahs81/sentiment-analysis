@@ -17,9 +17,11 @@ models/*.bin
 models/*.safetensors
 
 # Data & reports
-data/*.csv
-reports/*.png
-reports/*.json
+data/*
+!data/tickets.csv
+models/*.joblib
+reports/*
+!reports/.gitkeep
 
 # Notebooks checkpoints
 .ipynb_checkpoints/
